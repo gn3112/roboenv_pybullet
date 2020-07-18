@@ -108,13 +108,13 @@ while 1:
 
     p.stepSimulation()
 
-    p.setJointMotorControlArray(bodyIndex=kukaId,
-                            jointIndex=[i for i in range(self.numJoints)],
-                            controlMode=p.POSITION_CONTROL,
-                            targetPosition=[jointPoses[i] for in range(self.numJoints)],
-                            force=500,
-                            positionGain=0.03,
-                            velocityGain=1)
+        p.setJointMotorControlArray(bodyIndex=kukaId,
+                                jointIndex=[i for i in range(self.numJoints)],
+                                controlMode=p.POSITION_CONTROL,
+                                targetPosition=[jointPoses[i] for in range(self.numJoints)],
+                                force=500,
+                                positionGain=0.03,
+                                velocityGain=1)
 
 
     # if (hasPrevPose):

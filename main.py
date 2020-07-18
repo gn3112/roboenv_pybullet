@@ -1,10 +1,15 @@
-from arm import Arm
+from env.arm import Arm
 import time
+from rl.models import sac
+from rl.buffer import basic_replay_buffer
 
-agent = Arm(headless=True)
+agent = Arm(headless=True, )
 
-# Init replay buffer 
+# Init replay buffer
+buffer = basic_replay_buffer(size=10000)
+
 # Init networks (DQN: Q-networks)
+dqn()
 # random policy add to buffer
 # sample batch
 # train network with batch

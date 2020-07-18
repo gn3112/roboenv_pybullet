@@ -1,9 +1,9 @@
 import pybullet as p
-from world import World
+from .world import World
 import math
 
 class Arm(World):
-    def __init__(self, headless=False):
+    def __init__(self, reward, replay_buffer, headless=False):
         World.__init__(self,headless=headless)
         self.armId = p.loadURDF("kuka_iiwa/model.urdf", [0, 0, 0], useFixedBase=True)
 
@@ -49,6 +49,12 @@ class Arm(World):
         self.move_object(self.target_object, [-0.5,0,0.025],[0,0,0])
 
         self.prev_action = [0,0,0]
+
+        self.reward = reward 
+        self.replay_buffer = replay_buffer
+
+        self._eval = False
+
     def reset(self):
         for i in range(self.numJoints):
             p.resetJointState(self.armId, i, self.rp[i])
@@ -68,6 +74,8 @@ class Arm(World):
         return endEffectorPos
 
     def step(self, action):
+        prev_obs = self.get_observation()
+
         jointPoses = self.ik(offset=action)
         p.setJointMotorControlArray(bodyIndex=self.armId,
                                 jointIndices=[i for i in range(self.numJoints)],
@@ -82,10 +90,12 @@ class Arm(World):
 
         self.prev_action = action
 
-        dist = math.sqrt(sum([(obs[:3][i]-obs[3:6][i])**2 for i in range(3)]))
+        r = self.reward(self.ee_pos(), self.get_pos(self.target_object))
 
-        return obs, self.reward(dist)
+        if not self._eval:
+            self.replay_buffer.add(prev_obs + action + obs + [r])
 
+        return obs, r
 
     def ik(self, offset=[0,0,0]):
         endEffectorPos = self.ee_pos()
@@ -99,11 +109,11 @@ class Arm(World):
     def get_observation(self):
         cube_pos = self.get_pos(self.target_object)
         pw = p.getJointStates(self.armId, [i for i in range(self.numJoints)])
+        print(list(cube_pos[0]) , self.ee_pos() , self.prev_action)
         return list(cube_pos[0]) + self.ee_pos() + self.prev_action
-
-    def reward(self, criterion, task='reach'):
-        if criterion < 0.05:
-            return 1
-        else:
-            return - criterion
-        # TODO: multistep, distance not conditionned task
+    
+    def eval(self):
+        self._eval = True
+    
+    def train(self):
+        self._eval = False
